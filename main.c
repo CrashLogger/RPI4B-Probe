@@ -17,22 +17,52 @@ int main(int argc, char **argv)
 	  return(1);
 	}
 	
+	/*TODO: KOMENTARIOAK KENDU RPI-AN EXEKUTATZEAN!
 	if(!checkNetworkCards("MONITOR_IF") == 0){
 	  perror("\033[93m Ez dago monitorizatzeko interfazerik ekipo honetan! ");
 	  return(1);
 	}
-	//printf(MONITOR_IF " found!");
+	*/
 	
-	//Pipe bat erabiliz tcpdump-en irteera gurasoari bidaliko diogu
 	int pipefd[2];
 	pipe(pipefd);
 	
 	int pid1;
 	
 	if((pid1 = fork()) == 0){
+	  //Semea
 	  printf("Semea!\n");
 	  
+	  //Ez dugu hoditik irakurri behar semean
+	  close(pipefd[0]);
 	  
+	  //Output buffer-ak hoditik bidali
+	  dup2(pipefd[1], 1); //Stdout
+	  dup2(pipefd[1], 2); //Stderr
+	  
+	  //Stdout-ak jada konektatuta daudenez, pipefd ez dugu behar (gizakiontzat erreferentzia baino ez da)
+	  close(pipefd[1]);
+	  
+	  execl("/usr/bin/ps", "ps", "-aux", NULL);
+	  
+	}
+	else{
+	  //Gurasoa
+	  printf("Gurasoa!\n");
+	  
+	  //MTU bateko bufferra
+	  char buffer[1500];
+	  
+	  //Ez dugu hodira idatziko gurasoan
+	  close(pipefd[1]);
+	
+          while (read(pipefd[0], buffer, sizeof(buffer)) != 0)
+          {
+          
+            printf("WHEY: %s\n", buffer);
+          
+          }
+	
 	}
 	
 	return 0;
