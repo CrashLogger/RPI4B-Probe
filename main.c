@@ -17,10 +17,10 @@
 
 uint8_t checkPermissions();
 uint8_t checkNetworkCards(char* testString);
-double rollingCPUUsage();
+float getCPU(char* string);
 
-double additiveCPUUsage = 0.0;
-double additiveMEMUsage = 0.0;
+double absCPUUsage = 0.0;
+int CPUSamples = 0;
 
 void exitCatcher();
 
@@ -57,19 +57,19 @@ int main(int argc, char **argv)
 	pipe(cpupipefd);
 	
 	if((pid2 = fork()) == 0){
-	  //Semea, CPU neurketa
-	  //Ez dugu hoditik irakurri behar semean
+	  //Semea
 	  close(cpupipefd[0]);
 	  
-  	  //Output buffer-ak hoditik bidali
 	  dup2(cpupipefd[1], 1); //Stdout
 	  dup2(cpupipefd[1], 2); //Stderr
 	  
-	  //Stdout-ak jada konektatuta daudenez, pipefd ez dugu behar (gizakiontzat erreferentzia baino ez da)
 	  close(cpupipefd[1]);
 	  
-	  rollingCPUUsage();
-	  
+	  while(1){
+	    sleep(1);
+	    printf("Child: %d\n", getpid());
+	    system("ps -aux | grep tcpdump");
+	  }
 	}
 	else if((pid1 = fork()) == 0){
 	  //Semea, tcpdump
@@ -94,46 +94,36 @@ int main(int argc, char **argv)
 	  
 	}
 	else if((pid3 = fork()) == 0){
-	  //Prozesu honen lana CPU-a monitorizatzea da
-	  close(pipefd[1]);
-	  close(pipefd[0]);
+	  char buffer[1500];
+	  char* line0;
+	  char* line1;
+	  char* line2;
+	
+	  //Gurasoa
 	  close(cpupipefd[1]);
-	  
-	  char buffer[255];
-	  char* tok;
-	  
-	  char delim[5];
-	  sprintf(delim, "%c", 9);
-	  
-          while (read(cpupipefd[0], buffer, sizeof(buffer)) != 0)
-          {
-            printf("buffer");
-      	    if (strstr(buffer, "tcpdump") != NULL) {
+          while(1){
+            while (read(cpupipefd[0], buffer, sizeof(buffer)) != 0)
+            {
+              printf("Parent: %d\n", getpid());
+              line0 = strtok(buffer, "\n");
+              printf("%s\n", line0);
+              line1 = strtok(NULL, "\n");
+              printf("%s\n", line1);
+              line2 = strtok(NULL, "\n");
+              printf("%s\n", line2);
               
-              tok = strtok(buffer, delim);
-              //printf("tok1 == %s\n", tok);
-              tok = strtok(NULL, delim);
-              //printf("tok2 == %s\n", tok);
-              tok = strtok(NULL, delim);
-              printf("tok3 == %s\n", tok);
-              additiveCPUUsage = additiveCPUUsage + atof(tok);
-              tok = strtok(NULL, delim);
-              printf("tok4 == %s\n", tok);
-              additiveMEMUsage = additiveMEMUsage + atof(tok);
-              tok = strtok(NULL, delim);
-              
-              printf("\n\n%f", additiveCPUUsage);
-              
-              
+              absCPUUsage = absCPUUsage + getCPU(line0) + getCPU(line1) + getCPU(line2);
+              CPUSamples++;
             }
-          }	
-	  
+          }
+          return 0;
 	}
 	else{
 	  //Gurasoa
 	  printf("Gurasoa!\n");
 	  
-	  signal(SIGINT, exitCatcher);
+          signal(SIGINT, exitCatcher);
+	  pause;
 	  
 	  //MTU bateko bufferra
 	  char buffer[255];
@@ -169,23 +159,24 @@ int main(int argc, char **argv)
 }
 
 void exitCatcher(){
+  printf("\n%f -eko CPU erabilera bataz beste.\n", absCPUUsage/CPUSamples);
   kill(pid1, SIGKILL);
   kill(pid2, SIGKILL);
   kill(pid3, SIGKILL);
   kill(getpid(), SIGKILL);
 }
 
+float getCPU(char* string){
+  char* tok = 0;
+  tok = strtok(string, "  ");
+  tok = strtok(NULL, "  ");
+  tok = strtok(NULL, "  ");
+  return(atof(tok));
+}
+
 void cpuMeasCatcher(){
   checkCPU = 1;
   printf("PING!!\n");
-}
-
-double rollingCPUUsage(){
-  //Pakete bat jaso ostean CPU erabilera konprobatuko dugu
-  while(1){
-    wait(1);
-    system("ps -aux | grep tcpdump");
-  }
 }
 
 uint8_t checkPermissions(){
