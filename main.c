@@ -12,12 +12,15 @@
 #define MONITOR_IF "mon0"
 
 //Luis-ek duela urte asko 4 minutuko test denbora hartu zuen, erreferentzia izateko balioko zaigu
-#define T_TEST_S "30"
+#define T_TEST_S "5"
 
 
 uint8_t checkPermissions();
 uint8_t checkNetworkCards(char* testString);
 double rollingCPUUsage();
+
+double additiveCPUUsage = 0.0;
+double additiveMEMUsage = 0.0;
 
 void exitCatcher();
 
@@ -101,15 +104,27 @@ int main(int argc, char **argv)
 	  char buffer[255];
 	  char* tok;
 	  
+	  char delim[5];
+	  sprintf(delim, "%c", 9);
+	  
           while (read(cpupipefd[0], buffer, sizeof(buffer)) != 0)
           {
       	    if (strstr(buffer, "tcpdump") != NULL) {
-              printf("\033[96m %s\n \033[39m ", buffer);
               
-              tok = strtok(buffer, ".");
-              printf("tok1 == %s", tok);
-              tok = strtok(NULL, ".");
-              printf("tok2 == %s", tok);
+              tok = strtok(buffer, delim);
+              //printf("tok1 == %s\n", tok);
+              tok = strtok(NULL, delim);
+              //printf("tok2 == %s\n", tok);
+              tok = strtok(NULL, delim);
+              printf("tok3 == %s\n", tok);
+              additiveCPUUsage = additiveCPUUsage + atof(tok);
+              tok = strtok(NULL, delim);
+              printf("tok4 == %s\n", tok);
+              additiveMEMUsage = additiveMEMUsage + atof(tok);
+              tok = strtok(NULL, delim);
+              
+              printf("\n\n%f", additiveCPUUsage);
+              
               
             }
           }	
