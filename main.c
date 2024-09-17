@@ -18,12 +18,11 @@ int main(int argc, char **argv)
 	  return(1);
 	}
 	
-	/*TODO: KOMENTARIOAK KENDU RPI-AN EXEKUTATZEAN!
+	/*TODO: KOMENTARIOAK KENDU RPI-AN EXEKUTATZEAN!*/
 	if(!checkNetworkCards("MONITOR_IF") == 0){
 	  perror("\033[93m Ez dago monitorizatzeko interfazerik ekipo honetan! ");
 	  return(1);
 	}
-	*/
 	
 	int pipefd[2];
 	pipe(pipefd);
@@ -54,24 +53,22 @@ int main(int argc, char **argv)
 	  //MTU bateko bufferra
 	  char buffer[200];
 	  char* tok;
-	  //const char delim[2] = "\n";
-	  //strcpy(delim, "\n");
 	  
-	  //Ez dugu hodira idatziko gurasoan
 	  close(pipefd[1]);
 	
           while (read(pipefd[0], buffer, sizeof(buffer)) != 0)
           {
           
+          //TODO: Lerroak refinatu! Buffer laburragoak erabiltzea hobe(Azkarrago aterako dira->Azkarrago prozesatuko ditugu)!
           //Jasotako string-ak lerroka konpondu
             if((tok = strtok(buffer, "\n"))!=NULL){ 
-              printf("WHEY: %s", tok);
+              printf("%s", tok);
               while((tok = strtok(NULL, "\n"))!=NULL){
                 printf("\nLINE: %s", tok);
               }
             }
+            
           }
-          
 	}
 	
 	return 0;
