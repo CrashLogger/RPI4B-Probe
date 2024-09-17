@@ -3,6 +3,7 @@
 #include <stdlib.h>
 #include <errno.h>
 #include <unistd.h>
+#include <string.h>
 
 #define MONITOR_IF "mon0"
 
@@ -43,7 +44,7 @@ int main(int argc, char **argv)
 	  //Stdout-ak jada konektatuta daudenez, pipefd ez dugu behar (gizakiontzat erreferentzia baino ez da)
 	  close(pipefd[1]);
 	  
-	  execl("/usr/bin/ps", "ps", "-aux", NULL);
+	  execl("/usr/bin/tcpdump", "tcpdump", "-i", MONITOR_IF, NULL);
 	  
 	}
 	else{
@@ -51,7 +52,10 @@ int main(int argc, char **argv)
 	  printf("Gurasoa!\n");
 	  
 	  //MTU bateko bufferra
-	  char buffer[1500];
+	  char buffer[200];
+	  char* tok;
+	  //const char delim[2] = "\n";
+	  //strcpy(delim, "\n");
 	  
 	  //Ez dugu hodira idatziko gurasoan
 	  close(pipefd[1]);
@@ -59,10 +63,15 @@ int main(int argc, char **argv)
           while (read(pipefd[0], buffer, sizeof(buffer)) != 0)
           {
           
-            printf("WHEY: %s\n", buffer);
-          
+          //Jasotako string-ak lerroka konpondu
+            if((tok = strtok(buffer, "\n"))!=NULL){ 
+              printf("WHEY: %s", tok);
+              while((tok = strtok(NULL, "\n"))!=NULL){
+                printf("\nLINE: %s", tok);
+              }
+            }
           }
-	
+          
 	}
 	
 	return 0;
