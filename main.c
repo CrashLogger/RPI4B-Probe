@@ -107,7 +107,9 @@ int main(int argc, char **argv)
               printf("\033[96m %s\n \033[39m ", buffer);
               
               tok = strtok(buffer, "\t\t");
-              printf("tok == %s", tok);
+              printf("tok1 == %s", tok);
+              tok = strtok(NULL, "\t\t");
+              printf("tok2 == %s", tok);
               
             }
           }	
