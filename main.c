@@ -66,7 +66,7 @@ int main(int argc, char **argv)
 	  // "home/harrapaketak" azpi karpeta dagoen ala ez konprobatu, eta existitzen ez bada egin
           mkdir("/home/harrapaketak", 777);
 	  
-	  system("timeout " T_TEST_S " tcpdump -w - -U | tee home/harrapaketak/test.pcap | tcpdump -r -");
+	  system("timeout " T_TEST_S " tcpdump -w - -U -i " MONITOR_IF " | tee home/harrapaketak/test.pcap | tcpdump -r -");
 	  
 	  //execl("/usr/bin/tcpdump", "tcpdump", "-i", MONITOR_IF, NULL);
 	  
