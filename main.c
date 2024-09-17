@@ -27,13 +27,13 @@ int main(int argc, char **argv)
 {
 	
 	if(!checkPermissions()==0){
-	  perror("\033[31m Sudo moduan exekutatu behar da fitxategi hau, barneko dependentziek sudo behar dutelako! ");
+	  perror("\033[31m Sudo moduan exekutatu behar da fitxategi hau, barneko dependentziek sudo behar dutelako! \033[39m ");
 	  return(1);
 	}
 	
 	/*TODO: KOMENTARIOAK KENDU RPI-AN EXEKUTATZEAN!*/
 	if(!checkNetworkCards("MONITOR_IF") == 0){
-	  perror("\033[93m Ez dago monitorizatzeko interfazerik ekipo honetan! ");
+	  perror("\033[93m Ez dago monitorizatzeko interfazerik ekipo honetan! \033[39m");
 	  return(1);
 	}
 	
@@ -100,9 +100,9 @@ int main(int argc, char **argv)
 	  
           while (read(cpupipefd[0], buffer, sizeof(buffer)) != 0)
           {
-      	    if (strstr(buffer, "tcpdump") != NULL) {
+      	    //if (strstr(buffer, "tcpdump") != NULL) {
               printf("\033[96m %s\n \033[39m ", buffer);
-            }
+            //}
           }	
 	  
 	}
@@ -132,7 +132,7 @@ int main(int argc, char **argv)
             if((tok = strtok(buffer, "\n"))!=NULL){ 
               printf("%s", tok);
               while((tok = strtok(NULL, "\n"))!=NULL){
-                printf("\nLINE: %s", tok);
+                printf("\033[39m \nLINE: %s", tok);
               }
             }
             kill(pid2, SIGUSR1);
@@ -153,7 +153,7 @@ double rollingCPUUsage(){
   while(1){
     if(checkCPU==1){
       checkCPU = 0;
-      system("ps -aux" /* | grep tcpdump" */ );
+      system("ps -aux | grep tcpdump");
     }
   }
 }
