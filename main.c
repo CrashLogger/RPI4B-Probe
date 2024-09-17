@@ -12,7 +12,7 @@
 #define MONITOR_IF "mon0"
 
 //Luis-ek duela urte asko 4 minutuko test denbora hartu zuen, erreferentzia izateko balioko zaigu
-#define T_TEST_S "240"
+#define T_TEST_S "30"
 
 
 uint8_t checkPermissions();
@@ -100,9 +100,9 @@ int main(int argc, char **argv)
 	  
           while (read(cpupipefd[0], buffer, sizeof(buffer)) != 0)
           {
-      	    //if (strstr(buffer, "tcpdump") != NULL) {
+      	    if (strstr(buffer, "root") != NULL) {
               printf("\033[96m %s\n \033[39m ", buffer);
-            //}
+            }
           }	
 	  
 	}
