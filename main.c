@@ -4,8 +4,15 @@
 #include <errno.h>
 #include <unistd.h>
 #include <string.h>
+#include <sys/types.h>
+#include <fcntl.h>           /* Definition of AT_* constants */
+#include <sys/stat.h>
 
 #define MONITOR_IF "mon0"
+
+//Luis-ek duela urte asko 4 minutuko test denbora hartu zuen, erreferentzia izateko balioko zaigu
+#define T_TEST_S "240"
+
 
 uint8_t checkPermissions();
 uint8_t checkNetworkCards(char* testString);
@@ -56,7 +63,12 @@ int main(int argc, char **argv)
 	  //Stdout-ak jada konektatuta daudenez, pipefd ez dugu behar (gizakiontzat erreferentzia baino ez da)
 	  close(pipefd[1]);
 	  
-	  execl("/usr/bin/tcpdump", "tcpdump", "-i", MONITOR_IF, NULL);
+	  // "home/harrapaketak" azpi karpeta dagoen ala ez konprobatu, eta existitzen ez bada egin
+          mkdir("/home/harrapaketak", 777);
+	  
+	  system("timeout " T_TEST_S " tcpdump -w - -U | tee home/harrapaketak/test.pcap | tcpdump -r -");
+	  
+	  //execl("/usr/bin/tcpdump", "tcpdump", "-i", MONITOR_IF, NULL);
 	  
 	}
 	else{
