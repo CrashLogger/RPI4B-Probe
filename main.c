@@ -59,8 +59,6 @@ int main(int argc, char **argv)
 	if((pid2 = fork()) == 0){
 	  //Semea, CPU neurketa
 	  //Ez dugu hoditik irakurri behar semean
-	  signal(SIGUSR1, cpuMeasCatcher);
-	  
 	  close(cpupipefd[0]);
 	  
   	  //Output buffer-ak hoditik bidali
