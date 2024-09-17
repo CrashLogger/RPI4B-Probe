@@ -24,12 +24,25 @@ int main(int argc, char **argv)
 	  return(1);
 	}
 	
+	//Raspberry-an gaudenean eta konfiguratu dugunean, errore honen aurrean behar diren terminal komandoak:
+	/*
+	
+	iw phy `iw dev wlan0 info | gawk '/wiphy/ {printf "phy" $2}'` interface add mon0 type monitor
+	
+	ifconfig mon0 up
+	
+	*/
+	
 	int pipefd[2];
 	pipe(pipefd);
 	
 	int pid1;
+	int pid2;
 	
-	if((pid1 = fork()) == 0){
+	if((pid2 = fork()) == 0){
+	  //TODO: Check CPU Usage. Maybe: "ps -aux | grep tcpdump"?
+	}
+	else if((pid1 = fork()) == 0){
 	  //Semea
 	  printf("Semea!\n");
 	  
