@@ -184,10 +184,8 @@ void cpuMeasCatcher(){
 double rollingCPUUsage(){
   //Pakete bat jaso ostean CPU erabilera konprobatuko dugu
   while(1){
-    if(checkCPU==1){
-      checkCPU = 0;
-      system("ps -aux | grep tcpdump");
-    }
+    wait(1);
+    system("ps -aux | grep tcpdump");
   }
 }
 
