@@ -64,7 +64,7 @@ int main(int argc, char **argv)
 	  printf("Gurasoa!\n");
 	  
 	  //MTU bateko bufferra
-	  char buffer[200];
+	  char buffer[255];
 	  char* tok;
 	  
 	  close(pipefd[1]);
