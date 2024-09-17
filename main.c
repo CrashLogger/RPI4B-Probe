@@ -97,11 +97,21 @@ int main(int argc, char **argv)
 	  close(cpupipefd[1]);
 	  
 	  char buffer[255];
+	  char* tok;
+	  char* cpu;
+	  char* mem;
 	  
           while (read(cpupipefd[0], buffer, sizeof(buffer)) != 0)
           {
       	    if (strstr(buffer, "root") != NULL) {
               printf("\033[96m %s\n \033[39m ", buffer);
+              
+              tok = strtok(buffer, "\t");
+              cpu = strtok(NULL, "\t");
+              printf("CPU === %s\n", cpu);
+              mem = strtok(NULL, "\t");
+              printf("MEM === %s\n", mem);
+              
             }
           }	
 	  
