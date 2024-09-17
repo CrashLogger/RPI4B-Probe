@@ -64,35 +64,29 @@ struct timespec cpuStart, cpuFinish, cpuDelta;
       char buffer[255];
 
       while(1){
-        clock_gettime(CLOCK_REALTIME, &start);
+        clock_gettime(CLOCK_PROCESS_CPUTIME_ID, &start);
         while (read(pipefd[0], buffer, sizeof(buffer)) != 0){          
-
+          capturedPackets++;
           //printf("%s", buffer);
           //fflush(stdout);
           
-          clock_gettime(CLOCK_REALTIME, &finish);
-    
-          sub_timespec(start, finish, &delta);
-
           //printf("\033[31m %f\n \033[39m ", tproc);
           
           //ZERGATIK HEMEN?
           //Erlojuan lortutako datuek denbora kostatuko zaizkigu. Jada nahikoa galdu dugu aurreko lerroetan!
           //Amaieran gauden ala ez konprobatzea ere denbora kostatuko zaigu
-          clock_gettime(CLOCK_REALTIME, &start);
           
-          char tmp[20];
-          //printf("%d.%.9ld\n", (int)delta.tv_sec, delta.tv_nsec);
-          sprintf(tmp, "%d.%.9ld\n", (int)delta.tv_sec, delta.tv_nsec);
-          float tproc = atof(tmp);
-          
-          //Bufferrekin arazoak daude. Ez dakit zergaitik oraindik. Hori konpondu arte, rafaga baten hasierako geldialdia ignoratu beharra dago
-          if(tproc < 1){
-            absTime = absTime + tproc;
-            capturedPackets++;
-          }
+
+
 
           if(strstr(buffer, "CAPTURE TIME")){
+            clock_gettime(CLOCK_PROCESS_CPUTIME_ID, &finish);
+            
+            char tmp[20];
+            //printf("%d.%.9ld\n", (int)delta.tv_sec, delta.tv_nsec);
+            sprintf(tmp, "%d.%.9ld\n", (int)delta.tv_sec, delta.tv_nsec);
+            float tproc = atof(tmp);
+            absTime = tproc;
             printf("%s \nPakete kopurua: %d \n Bataz beste denbora/pak= %.9lf \n", buffer, capturedPackets, absTime/capturedPackets);
             return(0);
           }
