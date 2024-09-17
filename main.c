@@ -7,6 +7,7 @@
 #include <sys/types.h>
 #include <fcntl.h>           /* Definition of AT_* constants */
 #include <sys/stat.h>
+#include <signal.h>
 
 #define MONITOR_IF "mon0"
 
@@ -16,6 +17,11 @@
 
 uint8_t checkPermissions();
 uint8_t checkNetworkCards(char* testString);
+double rollingCPUUsage();
+
+//Seinalez eta aldagai honetaz baliatuz jakingo dugu noiz konprobatu CPU erabilera
+void cpuMeasCatcher();
+uint8_t checkCPU = 0;
 
 int main(int argc, char **argv)
 {
@@ -33,24 +39,37 @@ int main(int argc, char **argv)
 	
 	//Raspberry-an gaudenean eta konfiguratu dugunean, errore honen aurrean behar diren terminal komandoak:
 	/*
-	
 	iw phy `iw dev wlan0 info | gawk '/wiphy/ {printf "phy" $2}'` interface add mon0 type monitor
-	
 	ifconfig mon0 up
-	
 	*/
 	
 	int pipefd[2];
 	pipe(pipefd);
 	
-	int pid1;
-	int pid2;
+        int cpupipefd[2];
+	pipe(cpupipefd);
+	
+	int pid1, pid2, pid3;
 	
 	if((pid2 = fork()) == 0){
-	  //TODO: Check CPU Usage. Maybe: "ps -aux | grep tcpdump"?
+	  //Semea, CPU neurketa
+	  //Ez dugu hoditik irakurri behar semean
+	  signal(SIGUSR1, cpuMeasCatcher);
+	  
+	  close(cpupipefd[0]);
+	  
+  	  //Output buffer-ak hoditik bidali
+	  dup2(cpupipefd[1], 1); //Stdout
+	  dup2(cpupipefd[1], 2); //Stderr
+	  
+	  //Stdout-ak jada konektatuta daudenez, pipefd ez dugu behar (gizakiontzat erreferentzia baino ez da)
+	  close(cpupipefd[1]);
+	  
+	  rollingCPUUsage();
+	  
 	}
 	else if((pid1 = fork()) == 0){
-	  //Semea
+	  //Semea, tcpdump
 	  printf("Semea!\n");
 	  
 	  //Ez dugu hoditik irakurri behar semean
@@ -71,6 +90,20 @@ int main(int argc, char **argv)
 	  //execl("/usr/bin/tcpdump", "tcpdump", "-i", MONITOR_IF, NULL);
 	  
 	}
+	else if((pid3 = fork()) == 0){
+	  //Prozesu honen lana CPU-a monitorizatzea da
+	  close(pipefd[1]);
+	  close(pipefd[0]);
+	  close(cpupipefd[1]);
+	  
+	  char buffer[255];
+	  
+          while (read(cpupipefd[0], buffer, sizeof(buffer)) != 0)
+          {
+            printf("\033[93m %s\n", buffer);
+          }	
+	  
+	}
 	else{
 	  //Gurasoa
 	  printf("Gurasoa!\n");
@@ -80,6 +113,8 @@ int main(int argc, char **argv)
 	  char* tok;
 	  
 	  close(pipefd[1]);
+	  close(cpupipefd[0]);
+	  close(cpupipefd[1]);  
 	
           while (read(pipefd[0], buffer, sizeof(buffer)) != 0)
           {
@@ -92,11 +127,27 @@ int main(int argc, char **argv)
                 printf("\nLINE: %s", tok);
               }
             }
-            
+            kill(pid2, SIGUSR1);
           }
+          
 	}
 	
 	return 0;
+}
+
+void cpuMeasCatcher(){
+  checkCPU = 1;
+  printf("PING!!\n");
+}
+
+double rollingCPUUsage(){
+  //Pakete bat jaso ostean CPU erabilera konprobatuko dugu
+  while(1){
+    if(checkCPU==1){
+      checkCPU = 0;
+      system("ps -aux" /* | grep tcpdump" */ );
+    }
+  }
 }
 
 uint8_t checkPermissions(){
