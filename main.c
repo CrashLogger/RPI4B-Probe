@@ -106,9 +106,9 @@ int main(int argc, char **argv)
       	    if (strstr(buffer, "tcpdump") != NULL) {
               printf("\033[96m %s\n \033[39m ", buffer);
               
-              tok = strtok(buffer, "\t\t");
+              tok = strtok(buffer, ".");
               printf("tok1 == %s", tok);
-              tok = strtok(NULL, "\t\t");
+              tok = strtok(NULL, ".");
               printf("tok2 == %s", tok);
               
             }
