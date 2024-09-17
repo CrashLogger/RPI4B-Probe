@@ -100,7 +100,9 @@ int main(int argc, char **argv)
 	  
           while (read(cpupipefd[0], buffer, sizeof(buffer)) != 0)
           {
-            printf("\033[93m %s\n", buffer);
+      	    if (strstr(buffer, "tcpdump") != NULL) {
+              printf("\033[96m %s\n \033[39m ", buffer);
+            }
           }	
 	  
 	}
@@ -118,6 +120,12 @@ int main(int argc, char **argv)
 	
           while (read(pipefd[0], buffer, sizeof(buffer)) != 0)
           {
+          
+          if ((strstr(buffer, "packets captured") != NULL) || (strstr(buffer, "packets received") != NULL) || (strstr(buffer, "packets dropped") != NULL)) {
+          
+            printf("\n \033[92m %s \033[39m", buffer);
+          
+          }
           
           //TODO: Lerroak refinatu! Buffer laburragoak erabiltzea hobe(Azkarrago aterako dira->Azkarrago prozesatuko ditugu)!
           //Jasotako string-ak lerroka konpondu
