@@ -19,9 +19,13 @@ uint8_t checkPermissions();
 uint8_t checkNetworkCards(char* testString);
 double rollingCPUUsage();
 
+void exitCatcher();
+
 //Seinalez eta aldagai honetaz baliatuz jakingo dugu noiz konprobatu CPU erabilera
 void cpuMeasCatcher();
 uint8_t checkCPU = 0;
+
+int pid1, pid2, pid3;
 
 int main(int argc, char **argv)
 {
@@ -48,8 +52,6 @@ int main(int argc, char **argv)
 	
         int cpupipefd[2];
 	pipe(cpupipefd);
-	
-	int pid1, pid2, pid3;
 	
 	if((pid2 = fork()) == 0){
 	  //Semea, CPU neurketa
@@ -98,19 +100,14 @@ int main(int argc, char **argv)
 	  
 	  char buffer[255];
 	  char* tok;
-	  char* cpu;
-	  char* mem;
 	  
           while (read(cpupipefd[0], buffer, sizeof(buffer)) != 0)
           {
-      	    if (strstr(buffer, "root") != NULL) {
+      	    if (strstr(buffer, "tcpdump") != NULL) {
               printf("\033[96m %s\n \033[39m ", buffer);
               
               tok = strtok(buffer, "\t");
-              cpu = strtok(NULL, "\t");
-              printf("CPU === %s\n", cpu);
-              mem = strtok(NULL, "\t");
-              printf("MEM === %s\n", mem);
+              printf("tok == %s", tok);
               
             }
           }	
@@ -119,6 +116,8 @@ int main(int argc, char **argv)
 	else{
 	  //Gurasoa
 	  printf("Gurasoa!\n");
+	  
+	  signal(SIGINT, exitCatcher);
 	  
 	  //MTU bateko bufferra
 	  char buffer[255];
@@ -151,6 +150,13 @@ int main(int argc, char **argv)
 	}
 	
 	return 0;
+}
+
+void exitCatcher(){
+  kill(pid1, SIGKILL);
+  kill(pid2, SIGKILL);
+  kill(pid3, SIGKILL);
+  kill(getpid(), SIGKILL);
 }
 
 void cpuMeasCatcher(){
