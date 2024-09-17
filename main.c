@@ -107,6 +107,7 @@ int main(int argc, char **argv)
 	  
           while (read(cpupipefd[0], buffer, sizeof(buffer)) != 0)
           {
+            printf("buffer");
       	    if (strstr(buffer, "tcpdump") != NULL) {
               
               tok = strtok(buffer, delim);
