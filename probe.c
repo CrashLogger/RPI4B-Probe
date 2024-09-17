@@ -11,7 +11,7 @@
 #include <time.h>
 
 #define T_TEST_S "240"
-#define MONITOR_IF "wlp2s0"
+#define MONITOR_IF "mon0"
 
 enum { NS_PER_SECOND = 1000000000 };
 
@@ -57,7 +57,7 @@ struct timespec cpuStart, cpuFinish, cpuDelta;
         //printf("%d.%.9ld\n", (int)delta.tv_sec, delta.tv_nsec);
         sprintf(tmp, "%d.%.9ld\n", (int)delta.tv_sec, delta.tv_nsec);
         float tproc = atof(tmp);
-        printf("\033[31m CAPTURE TIME: %f\n \033[39m ", tproc);
+        printf("\033[31m CAPTURE TIME: %.9lf\n \033[39m ", tproc);
     }
     else{
     
@@ -93,7 +93,7 @@ struct timespec cpuStart, cpuFinish, cpuDelta;
           }
 
           if(strstr(buffer, "CAPTURE TIME")){
-            printf("%s \n Bataz beste denbora/pak= %f\n", buffer, absTime/capturedPackets);
+            printf("%s \nPakete kopurua: %d \n Bataz beste denbora/pak= %.9lf \n", buffer, capturedPackets, absTime/capturedPackets);
             return(0);
           }
           
