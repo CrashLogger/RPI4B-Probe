@@ -28,14 +28,15 @@ uint8_t done = 0;
 int main(int argc, char **argv)
 {
 
-struct timespec start, finish, delta;
-struct timespec cpuStart, cpuFinish, cpuDelta;
+  struct timespec start, finish, delta;
+  struct timespec cpuStart, cpuFinish, cpuDelta;
 
-    int pipefd[2];
-    pipe(pipefd);
+  int pipefd[2];
+  pipe(pipefd);
+  
+  if((pid1 = fork()) == 0){
+    //Semea, hemen (honen azpian berez, system erabiltzen delako eta es execl) tcpdump exekutatuko da
     
-    if((pid1 = fork()) == 0){
-      
     //Ez dugu hoditik irakurri behar semean
     close(pipefd[0]);
 
@@ -45,57 +46,70 @@ struct timespec cpuStart, cpuFinish, cpuDelta;
     
     //Stdout-ak jada konektatuta daudenez, pipefd ez dugu behar (gizakiontzat erreferentzia baino ez da)
     close(pipefd[1]);
+  
+    //tenporizadorea martxan jartzen dugu, paketeko denbora izateko
+    clock_gettime(CLOCK_PROCESS_CPUTIME_ID, &start);
     
-        clock_gettime(CLOCK_PROCESS_CPUTIME_ID, &start);
-        //tcpdump deitzen dugu, T_TEST_S segundu luzerako froga bat egiteko
-        system("timeout " T_TEST_S " tcpdump -w - -U -i " MONITOR_IF " | tee home/crash/test.pcap | tcpdump -r -");
-        printf("ENDED\n");
-        clock_gettime(CLOCK_PROCESS_CPUTIME_ID, &finish);
-    
-        sub_timespec(start, finish, &delta);
-        char tmp[20];
-        //printf("%d.%.9ld\n", (int)delta.tv_sec, delta.tv_nsec);
-        sprintf(tmp, "%d.%.9ld\n", (int)delta.tv_sec, delta.tv_nsec);
-        float tproc = atof(tmp);
-        printf("\033[31m CAPTURE TIME: %.9lf\n \033[39m ", tproc);
-    }
-    else{
-    
-      char buffer[255];
+    //tcpdump abiarazten dugu, T_TEST_S segundu luzerako froga bat egiteko
+    system("timeout " T_TEST_S " tcpdump -w - -U -i " MONITOR_IF " | tee home/crash/test.pcap | tcpdump -r -");
+    printf("ENDED\n");
+    clock_gettime(CLOCK_PROCESS_CPUTIME_ID, &finish);
 
-      while(1){
-        clock_gettime(CLOCK_PROCESS_CPUTIME_ID, &start);
-        while (read(pipefd[0], buffer, sizeof(buffer)) != 0){          
-          capturedPackets++;
-          //printf("%s", buffer);
-          //fflush(stdout);
-          
-          //printf("\033[31m %f\n \033[39m ", tproc);
-          
-          //ZERGATIK HEMEN?
-          //Erlojuan lortutako datuek denbora kostatuko zaizkigu. Jada nahikoa galdu dugu aurreko lerroetan!
-          //Amaieran gauden ala ez konprobatzea ere denbora kostatuko zaigu
-          
+    //Erlojuaren kaptura amaitu denez, eta beraz kaptura ere, inefizientzia onargarria da atal honetan.
+    sub_timespec(start, finish, &delta);
+    char tmp[20];
+    //printf("%d.%.9ld\n", (int)delta.tv_sec, delta.tv_nsec);
+    sprintf(tmp, "%d.%.9ld\n", (int)delta.tv_sec, delta.tv_nsec);
+    float tproc = atof(tmp);
+    printf("\033[31m CAPTURE TIME: %.12lf\n CAPTURE TIME PER PACKET: %.12lf \033[39m ", tproc, tproc/capturedPackets);
+  }
+  else{
+    //Gurasoa, hemen estatistikak egiten dira.
+    char buffer[255];
 
+    while(1){
+      clock_gettime(CLOCK_PROCESS_CPUTIME_ID, &start);
+      
+      //Hoditik jasotako gauzak
+      while (read(pipefd[0], buffer, sizeof(buffer)) != 0){          
+        capturedPackets++;
 
-
-          if(strstr(buffer, "CAPTURE TIME")){
-            clock_gettime(CLOCK_PROCESS_CPUTIME_ID, &finish);
-            
-            char tmp[20];
-            //printf("%d.%.9ld\n", (int)delta.tv_sec, delta.tv_nsec);
-            sprintf(tmp, "%d.%.9ld\n", (int)delta.tv_sec, delta.tv_nsec);
-            float tproc = atof(tmp);
-            absTime = tproc;
-            printf("%s \nPakete kopurua: %d \n Bataz beste denbora/pak= %.9lf \n", buffer, capturedPackets, absTime/capturedPackets);
-            return(0);
-          }
+        if(strstr(buffer, "CAPTURE TIME")){
+          clock_gettime(CLOCK_PROCESS_CPUTIME_ID, &finish);
           
+          char tmp[20];
+          sprintf(tmp, "%d.%.9ld\n", (int)delta.tv_sec, delta.tv_nsec);
+          float tproc = atof(tmp);
+          absTime = tproc;
+          printf("%s \nPakete kopurua: %d \n Bataz beste denbora/pak= %.9lf \n", buffer, capturedPackets, absTime/capturedPackets);
+          return(0);
         }
+        
       }
     }
+  }
  
-    return 0;
+  return 0;
+}
+
+uint8_t T2Sim(uint32_t usecKop){
+
+  struct timespec start, check;
+
+  clock_gettime(CLOCK_PROCESS_CPUTIME_ID, &start);
+
+  while(1){
+  
+    clock_gettime(CLOCK_PROCESS_CPUTIME_ID, &check);
+    if(((uint64_t)check.tv_nsec - (uint64_t)start.tv_nsec) > usecKop * 1000){
+      return(0);
+    }
+    else{
+      //Ezer ez dugu egiten
+    }
+  
+  }
+
 }
 
 void sub_timespec(struct timespec t1, struct timespec t2, struct timespec *td)
