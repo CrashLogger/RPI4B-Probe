@@ -16,6 +16,8 @@
 enum { NS_PER_SECOND = 1000000000 };
 
 void sub_timespec(struct timespec t1, struct timespec t2, struct timespec *td);
+uint8_t T2Sim(uint32_t usecKop);
+
 
 double absTime = 0.0;
 double absCPU = 0.0;
@@ -84,6 +86,8 @@ int main(int argc, char **argv)
           printf("%s \nPakete kopurua: %d \n Bataz beste denbora/pak= %.9lf \n", buffer, capturedPackets, absTime/capturedPackets);
           return(0);
         }
+        
+        T2Sim(15);
         
       }
     }
