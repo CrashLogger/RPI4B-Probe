@@ -150,6 +150,12 @@ pcap_t* create_pcap_handle(char* device, char* filter)
         fprintf(stderr, "pcap_lookupnet: %s\n", errbuf);
         return NULL;
     }
+    
+    // Check that it can be set to monitor mode
+      if (pcap_can_set_rfmon(handle) == PCAP_ERROR) {
+        fprintf(stderr, "pcap_can_set_rfmon: %s\n", errbuf);
+        return NULL;
+    }
 
     // Open the device for live capture.
     handle = pcap_open_live(device, BUFSIZ, 1, 1000, errbuf);
