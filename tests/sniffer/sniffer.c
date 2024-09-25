@@ -199,10 +199,10 @@ void get_link_header_len(pcap_t* handle)
         linkhdrlen = 24;
         break;
  
-    default:
-        printf("Unsupported datalink (%d)\n", linktype);
-        linkhdrlen = 0;
-    }
+    default
+        printf("Undefined link layer, assuming Ethernet!\n");
+        linkhdrlen = 14;
+        break;
 }
 
 void packet_handler(u_char *user, const struct pcap_pkthdr *packethdr, const u_char *packetptr)
