@@ -203,6 +203,7 @@ void get_link_header_len(pcap_t* handle)
         printf("Undefined link layer, assuming Ethernet!\n");
         linkhdrlen = 14;
         break;
+    }
 }
 
 void packet_handler(u_char *user, const struct pcap_pkthdr *packethdr, const u_char *packetptr)
