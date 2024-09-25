@@ -150,12 +150,6 @@ pcap_t* create_pcap_handle(char* device, char* filter)
         fprintf(stderr, "pcap_lookupnet: %s\n", errbuf);
         return NULL;
     }
-    
-    // Check that it can be set to monitor mode
-      if (pcap_can_set_rfmon(handle) == PCAP_ERROR) {
-        fprintf(stderr, "pcap_can_set_rfmon: %s\n", errbuf);
-        return NULL;
-    }
 
     // Open the device for live capture.
     handle = pcap_open_live(device, BUFSIZ, 1, 1000, errbuf);
@@ -375,6 +369,12 @@ int main(int argc, char *argv[])
     // Create packet capture handle.
     handle = create_pcap_handle(device, filter);
     if (handle == NULL) {
+        return -1;
+    }
+    
+    // Check that it can be set to monitor mode
+    if (pcap_can_set_rfmon(handle) == PCAP_ERROR) {
+        perror("pcap_can_set_rfmon: %s\n");
         return -1;
     }
 
