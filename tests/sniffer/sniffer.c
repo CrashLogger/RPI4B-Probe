@@ -33,6 +33,18 @@
 #include <netinet/udp.h>
 #include <netinet/ip_icmp.h>
 
+//1us galtzen da kaptura egiten gutxi gora behera, beste 1us galtzen da gauzak kopiatu eta mugitzen, beraz, T2 prozesatzean hori parkatuko dugu
+#define T2SIMTIME_US 16
+
+//Oinarrizko ML egoera, minutu bateko interbaloetara borobilduta
+#define BASIC_T31SIMTIME_S 60
+#define BASIC_T32SIMTIME_US 1162000
+
+//ML egoera aurreratua, minutu bateko interbaloetara borobilduta
+#define ADVANCED_T31SIMTIME_S 60
+#define ADVANCED_T32SIMTIME_US 2350000
+
+
 enum { NS_PER_SECOND = 1000000000 };
 
 pcap_t* handle;
@@ -42,6 +54,31 @@ char timestamp[255];
 
 //For measuring CPU Usage
 struct timespec cpuStart, cpuFinish, cpuDelta;
+
+void T2Sim(uint32_t usecKop){
+  struct timespec start, check;
+  clock_gettime(CLOCK_PROCESS_CPUTIME_ID, &start);
+  while(1){
+    clock_gettime(CLOCK_PROCESS_CPUTIME_ID, &check);
+    if(((uint64_t)check.tv_nsec - (uint64_t)start.tv_nsec) > usecKop * 1000){
+      return;
+    }
+    else{
+      //Ezer ez dugu egiten
+    }
+  }
+}
+
+void MLSim(int signo)
+{
+  //T2Sim-ek mikrosegundoak nahi ditu.
+  printf("ML simulatzen!\n");
+  T2Sim(BASIC_T32SIMTIME_US);
+  printf("ML simulatuta!\n");
+  alarm(BASIC_T31SIMTIME_S);
+  
+  return;
+}
 
 void sub_timespec(struct timespec t1, struct timespec t2, struct timespec *td)
 {
@@ -229,6 +266,11 @@ void packet_handler(u_char *user, const struct pcap_pkthdr *packethdr, const u_c
         packets += 1;
         break;
     }
+    
+    //Protokoloa identifikatu ostean, harrapatutako guztia pasa ahal zaio benetako T2 funtzioari
+    //Kasu honetan ordea, simulatzailea dugu bakarrik.
+    
+    T2Sim(T2SIMTIME_US);
 }
 
 void stop_capture(int signo)
@@ -238,7 +280,7 @@ void stop_capture(int signo)
     clock_gettime(CLOCK_PROCESS_CPUTIME_ID, &cpuFinish);
     sub_timespec(cpuStart, cpuFinish, &cpuDelta);
     
-    printf("T1 CPU Time: %d.%.9ld\n", (int)cpuDelta.tv_sec, cpuDelta.tv_nsec);
+    printf("T1 + T2 CPU Time: %d.%.9ld\n", (int)cpuDelta.tv_sec, cpuDelta.tv_nsec);
     
     if (pcap_stats(handle, &stats) >= 0) {
         printf("\n%d packets captured\n", packets);
@@ -287,6 +329,7 @@ int main(int argc, char *argv[])
     signal(SIGINT, stop_capture);
     signal(SIGTERM, stop_capture);
     signal(SIGQUIT, stop_capture);
+    signal(SIGALRM, MLSim);
     
     // Create packet capture handle.
     handle = create_pcap_handle(device, filter);
@@ -302,6 +345,8 @@ int main(int argc, char *argv[])
 
     //T1
     clock_gettime(CLOCK_PROCESS_CPUTIME_ID, &cpuStart);
+
+    alarm(BASIC_T31SIMTIME_S);
 
     // Start the packet capture with a set count or continually if the count is 0.
     if (pcap_loop(handle, count, packet_handler, (u_char*)NULL) == PCAP_ERROR) {

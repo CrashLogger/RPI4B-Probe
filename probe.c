@@ -97,13 +97,9 @@ int main(int argc, char **argv)
 }
 
 uint8_t T2Sim(uint32_t usecKop){
-
   struct timespec start, check;
-
   clock_gettime(CLOCK_PROCESS_CPUTIME_ID, &start);
-
   while(1){
-  
     clock_gettime(CLOCK_PROCESS_CPUTIME_ID, &check);
     if(((uint64_t)check.tv_nsec - (uint64_t)start.tv_nsec) > usecKop * 1000){
       return(0);
@@ -111,9 +107,7 @@ uint8_t T2Sim(uint32_t usecKop){
     else{
       //Ezer ez dugu egiten
     }
-  
   }
-
 }
 
 void sub_timespec(struct timespec t1, struct timespec t2, struct timespec *td)
