@@ -33,6 +33,9 @@
 #include <netinet/udp.h>
 #include <netinet/ip_icmp.h>
 
+//Nahiz eta timeout egin behar dugun, test denbora hemen jarrita bataz besteko CPU erabilerak lor ditzakegu.
+#define TEST_TIME 240
+
 //1us galtzen da kaptura egiten gutxi gora behera, beste 1us galtzen da gauzak kopiatu eta mugitzen, beraz, T2 prozesatzean hori parkatuko dugu
 #define T2SIMTIME_US 16
 
@@ -41,8 +44,8 @@
 #define BASIC_T32SIMTIME_US 1162000
 
 //ML egoera aurreratua, minutu bateko interbaloetara borobilduta
-#define ADVANCED_T31SIMTIME_S 60
-#define ADVANCED_T32SIMTIME_US 2350000
+//#define ADVANCED_T31SIMTIME_S 60
+//#define ADVANCED_T32SIMTIME_US 2350000
 
 
 enum { NS_PER_SECOND = 1000000000 };
@@ -50,6 +53,7 @@ enum { NS_PER_SECOND = 1000000000 };
 pcap_t* handle;
 int linkhdrlen;
 int packets;
+int ML_Rounds;
 char timestamp[255];
 
 //For measuring CPU Usage
@@ -67,13 +71,20 @@ void T2Sim(uint32_t usecKop){
       //Ezer ez dugu egiten
     }
   }
+  
 }
 
 void MLSim(int signo)
 {
   //T2Sim-ek mikrosegundoak nahi ditu.
   printf("ML simulatzen!\n");
-  T2Sim(BASIC_T32SIMTIME_US);
+  ML_Rounds++;
+  
+  //Honen itxaronaldia luzeegia da T2Sim-erako
+  //Itxaronaldi honen CPU erabilera ezin dugu neurtu usleep-ek ez duelako CPU-a lapurtzen
+  usleep(BASIC_T32SIMTIME_US);
+  
+  //T2Sim(BASIC_T32SIMTIME_US);
   printf("ML simulatuta!\n");
   alarm(BASIC_T31SIMTIME_S);
   
@@ -98,7 +109,6 @@ void sub_timespec(struct timespec t1, struct timespec t2, struct timespec *td)
 
 char* parseTimeStamp(struct timeval tv){
 
-    
     uint8_t hours = (tv.tv_sec/3600);
     uint8_t minutes = (tv.tv_sec -(3600*hours))/60;
     uint8_t seconds = (tv.tv_sec -(3600*hours)-(minutes*60));
@@ -280,7 +290,33 @@ void stop_capture(int signo)
     clock_gettime(CLOCK_PROCESS_CPUTIME_ID, &cpuFinish);
     sub_timespec(cpuStart, cpuFinish, &cpuDelta);
     
-    printf("T1 + T2 CPU Time: %d.%.9ld\n", (int)cpuDelta.tv_sec, cpuDelta.tv_nsec);
+    //Suposatuko dugu T2 eta T32 simulazioa beti 100% zehatza dela
+    
+    /*
+    BASIC_T31SIMTIME_S
+    BASIC_T32SIMTIME_US
+    
+    T2SIMTIME_US
+    TEST_TIME
+    */
+  
+    float completeCaptureCPUTime = 0.0f;
+    float T1CPUTime = 0.0f;
+    float T2CPUTime = 0.0f;
+    float T32CPUTime = 0.0f;
+    
+    char tmpBuffer[255];
+    sprintf(tmpBuffer, "%d.%.9ld\n", (int)cpuDelta.tv_sec, cpuDelta.tv_nsec);
+    
+    completeCaptureCPUTime = atof(tmpBuffer);
+    T2CPUTime = packets * (T2SIMTIME_US/(float)1000000);
+    T32CPUTime = ML_Rounds*(BASIC_T32SIMTIME_US/(float)1000000);
+    T1CPUTime = completeCaptureCPUTime - T2CPUTime;
+    
+    printf("CPU TOTAL USED TIME:  %3.10f s - %3.6f %% - %3.10f s/pak \n", completeCaptureCPUTime, completeCaptureCPUTime/TEST_TIME, completeCaptureCPUTime/packets);
+    printf("CPU USAGE DURING T1:  %3.10f s - %3.6f %% - %3.10f s/pak \n", T1CPUTime, T1CPUTime/TEST_TIME, T1CPUTime/packets);
+    printf("CPU USAGE DURING T2:  %3.10f s - %3.6f %% - %3.10f s/pak \n", T2CPUTime, T2CPUTime/TEST_TIME, T2CPUTime/packets);
+    printf("CPU USAGE DURING T32: %3.10f s - %3.6f %% - %3.10f s/pak \n", T32CPUTime, T2CPUTime/TEST_TIME, T32CPUTime/packets);
     
     if (pcap_stats(handle, &stats) >= 0) {
         printf("\n%d packets captured\n", packets);
@@ -292,8 +328,7 @@ void stop_capture(int signo)
 }
 
 int main(int argc, char *argv[])
-{
-
+{    
     char device[256];
     char filter[256]; 
     int count = 0;
