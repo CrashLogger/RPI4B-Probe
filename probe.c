@@ -11,7 +11,7 @@
 #include <time.h>
 
 #define T_TEST_S "20"
-#define MONITOR_IF "lo"
+#define MONITOR_IF "mon0"
 
 enum { NS_PER_SECOND = 1000000000 };
 

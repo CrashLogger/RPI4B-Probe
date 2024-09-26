@@ -45,7 +45,7 @@
 
 //ML egoera aurreratua, minutu bateko interbaloetara borobilduta
 //#define ADVANCED_T31SIMTIME_S 60
-//#define ADVANCED_T32SIMTIME_US 2350000
+//#define BASIC_T32SIMTIME_US 2350000
 
 
 enum { NS_PER_SECOND = 1000000000 };
@@ -142,6 +142,8 @@ pcap_t* create_pcap_handle(char* device, char* filter)
             fprintf(stderr, "pcap_findalldevs(): %s\n", errbuf);
             return NULL;
         }
+	printf("%s, %s, %s\n", devices[0].name, devices[1].name, devices[2].name);
+
         strcpy(device, devices[0].name);
     }
 
@@ -164,7 +166,7 @@ pcap_t* create_pcap_handle(char* device, char* filter)
         return NULL;
     }
 
-    // Bind the packet filter to the libpcap handle.    
+    // Bind the packet filter to the libpcap handle.
     if (pcap_setfilter(handle, &bpf) == PCAP_ERROR) {
         fprintf(stderr, "pcap_setfilter(): %s\n", pcap_geterr(handle));
         return NULL;
@@ -199,7 +201,7 @@ void get_link_header_len(pcap_t* handle)
         linkhdrlen = 24;
         break;
  
-    default
+    default:
         printf("Undefined link layer, assuming Ethernet!\n");
         linkhdrlen = 14;
         break;
@@ -317,7 +319,7 @@ void stop_capture(int signo)
     printf("CPU TOTAL USED TIME:  %3.10f s - %3.6f %% - %3.10f s/pak \n", completeCaptureCPUTime, completeCaptureCPUTime/TEST_TIME, completeCaptureCPUTime/packets);
     printf("CPU USAGE DURING T1:  %3.10f s - %3.6f %% - %3.10f s/pak \n", T1CPUTime, T1CPUTime/TEST_TIME, T1CPUTime/packets);
     printf("CPU USAGE DURING T2:  %3.10f s - %3.6f %% - %3.10f s/pak \n", T2CPUTime, T2CPUTime/TEST_TIME, T2CPUTime/packets);
-    printf("CPU USAGE DURING T32: %3.10f s - %3.6f %% - %3.10f s/pak \n", T32CPUTime, T2CPUTime/TEST_TIME, T32CPUTime/packets);
+    printf("CPU USAGE DURING T32: %3.10f s - %3.6f %% - %3.10f s/pak \n", T32CPUTime, T32CPUTime/TEST_TIME, T32CPUTime/packets);
     
     if (pcap_stats(handle, &stats) >= 0) {
         printf("\n%d packets captured\n", packets);
@@ -388,6 +390,7 @@ int main(int argc, char *argv[])
     //T1
     clock_gettime(CLOCK_PROCESS_CPUTIME_ID, &cpuStart);
 
+    //Enable this line to simulate ML processing
     alarm(BASIC_T31SIMTIME_S);
 
     // Start the packet capture with a set count or continually if the count is 0.
